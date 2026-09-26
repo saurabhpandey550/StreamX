@@ -269,9 +269,12 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 const changeCurrentPassword = asyncHandler(async (req, res) => {
     const { oldPassword, newPassword } = req.body
 
-    const user = User.findById(req.user?._id)
+    const user = await User.findById(req.user?._id)
+    if (!user) {
+        throw new ApiError(404, "User not found")
+    }
 
-    const isPasswordCorrect = user.isPasswordCorrect(oldPassword)
+    const isPasswordCorrect = await user.isPasswordCorrect(oldPassword)
 
     if (!isPasswordCorrect) {
         throw new ApiError(400, "Invalid old Password")
@@ -281,7 +284,7 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
     await user.save({ validateBeforeSave: false })
 
     return res
-        .save(200)
+        .status(200)
         .json(new ApiResponse(200, {}, "Password changed successfully"))
 })
 
@@ -403,7 +406,7 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
         $lookup: {
             from : "subscription",
             localField : "_id",
-            foreignField: "subscribers",
+            foreignField: "subscriber",
             as: "subscribedTo"
         }
     },
